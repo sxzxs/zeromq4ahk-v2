@@ -24,7 +24,7 @@ zmq_ctx_shutdown(ctx)
 ; 返回包含字符串的缓冲对象.
 StrBuf(str, encoding := 'UTF-8')
 {
-    ; 计算所需的大小并分配缓冲.
+    ; 计算所需的大小并分配缓冲
     buf := Buffer(StrPut(str, encoding))
     ; 复制或转换字符串.
     StrPut(str, buf, encoding)
