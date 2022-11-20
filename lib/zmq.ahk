@@ -20,6 +20,29 @@ zmq_msg_data(message) => DllCall(zmqdll_func['zmq_msg_data'], "Ptr", message, "p
 zmq_msg_init_size(message, size) => DllCall(zmqdll_func['zmq_msg_init_size'], "Ptr", message, "uptr", size, "int")
 zmq_msg_close(message) => DllCall(zmqdll_func['zmq_msg_close'], "Ptr", message, "int")
 
+;ZMQ_EXPORT int zmq_poll (zmq_pollitem_t *items_, int nitems_, long timeout_);
+zmq_poll(items := array(map("socket", 0, "fd", 0, "events", 0, "revents", 0)), time_out := -1)
+{
+    x64 := (A_PtrSize == 8)
+    buf := buffer(items.Length * (x64 ? 24 : 12))
+    for k, v in  items
+    {
+        offset := (x64 ? 24 : 12) * (k - 1)
+        NumPut("ptr", v['socket'], buf, offset)
+        NumPut("ptr", v['fd'], buf, (x64 ? 8 : 4) + offset)
+        NumPut("short", v['events'], buf, (x64 ? 16 : 8) + offset)
+        NumPut("short", v['revents'], buf, (x64 ? 18 : 10) + offset)
+    }
+    DllCall(zmqdll_func['zmq_poll'], "Ptr", buf, "Int", items.Length, "Int", time_out, "Int")
+    revents := []
+    for k, v in items
+    {
+        offset := (x64 ? 24 : 12) * (k - 1)
+        revents.Push(NumGet(buf, (x64 ? 18 : 10) + offset, "short"))
+    }
+    return revents
+}
+
 zmq_send_string(socket, str, encoding := "UTF-8", mode := 0)
 {
     buf := Buffer(StrPut(str, encoding))
