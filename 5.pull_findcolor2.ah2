@@ -6,16 +6,19 @@ zmq_version(&a := 0, &b := 0, &c := 0)
 logger.info("版本: ", a, b, c)
 
 ctx := zmq_ctx_new()
-socket := zmq_socket(ctx, ZMQ_PUSH)
-rtn := zmq_bind(socket, "tcp://*:5555")
-logger.info(rtn)
+socket := zmq_socket(ctx, ZMQ_PULL)
+rtn := zmq_connect(socket, "tcp://localhost:5555")
 
-loop(10)
-{
-    zmq_send_string(socket, A_Index)
-    logger.info(A_Index)
-    Sleep(200)
-}
+req := zmq_socket(ctx, ZMQ_REQ)
+rnt := zmq_connect(REQ, "tcp://localhost:5556")
+
+rtn := zmq_recv_string(socket, &recv_str := '')
+logger.info("任务", recv_str)
+sleep(3000)
+
+zmq_send_string(req, "没找到")
+zmq_recv_string(req, &recv_str := '')
+logger.info(recv_str)
 
 zmq_close(socket)
 zmq_ctx_shutdown(ctx)

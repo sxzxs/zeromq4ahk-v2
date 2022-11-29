@@ -7,7 +7,7 @@ logger.info("版本: ", a, b, c)
 
 ctx := zmq_ctx_new()
 socket := zmq_socket(ctx, ZMQ_PUSH)
-rtn := zmq_bind(socket, "tcp://*:5555")
+rtn := zmq_connect(socket, "tcp://localhost:5557")
 logger.info(rtn)
 
 loop(10)

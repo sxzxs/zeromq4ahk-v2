@@ -1,3 +1,4 @@
+
 #include <log>
 #include <zmq>
 logger.is_out_file := true
@@ -5,20 +6,21 @@ logger.is_use_editor := false
 zmq_version(&a := 0, &b := 0, &c := 0)
 logger.info("版本: ", a, b, c)
 
+
 ctx := zmq_ctx_new()
-socket := zmq_socket(ctx, ZMQ_PUSH)
-rtn := zmq_bind(socket, "tcp://*:5555")
+socket := zmq_socket(ctx, ZMQ_PULL)
+rtn := zmq_bind(socket, "tcp://*:5558")
 logger.info(rtn)
 
-loop(10)
+loop(50)
 {
-    zmq_send_string(socket, A_Index)
-    logger.info(A_Index)
-    Sleep(200)
+    rtn := zmq_recv_string(socket, &recv_str := '')
+    logger.info(recv_str)
 }
 
 zmq_close(socket)
 zmq_ctx_shutdown(ctx)
+
 
 ; 返回包含字符串的缓冲对象.
 StrBuf(str, encoding := 'UTF-8')

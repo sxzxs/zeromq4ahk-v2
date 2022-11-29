@@ -10,7 +10,7 @@ socket := zmq_socket(ctx, ZMQ_PUSH)
 rtn := zmq_bind(socket, "tcp://*:5555")
 logger.info(rtn)
 
-loop(10)
+loop
 {
     zmq_send_string(socket, A_Index)
     logger.info(A_Index)

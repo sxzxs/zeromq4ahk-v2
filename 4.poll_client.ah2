@@ -19,8 +19,8 @@ send_str := "
 loop
 {
     zmq_send_string(requester, send_str)
-    str := zmq_recv_string(requester)
-    logger.info(str)
+    rtn := zmq_recv_string(requester, &recv_str := '')
+    logger.info(recv_str)
     Sleep(2000)
 }
 

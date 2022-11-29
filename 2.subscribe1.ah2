@@ -15,8 +15,8 @@ logger.info(rtn)
 
 loop(50)
 {
-    str := zmq_recv_string(socket)
-    logger.info(str)
+    rtn := zmq_recv_string(socket, &recv_str := '')
+    logger.info(recv_str)
 }
 
 zmq_close(socket)
