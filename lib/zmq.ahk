@@ -419,6 +419,3 @@ class zmq_constant
         global memcpy := DllCall("GetProcAddress", "Ptr", DllCall("LoadLibrary", "Str", "ntdll.dll", "Ptr"), "AStr", "memcpy", "Ptr")
     }
 }
-
-
-#Include <Advapi32>
