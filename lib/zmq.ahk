@@ -19,6 +19,10 @@ zmq_msg_size(message) => DllCall(zmqdll_func['zmq_msg_size'], "Ptr", message, "u
 zmq_msg_data(message) => DllCall(zmqdll_func['zmq_msg_data'], "Ptr", message, "ptr")
 zmq_msg_init_size(message, size) => DllCall(zmqdll_func['zmq_msg_init_size'], "Ptr", message, "uptr", size, "int")
 zmq_msg_close(message) => DllCall(zmqdll_func['zmq_msg_close'], "Ptr", message, "int")
+zmq_msg_send(message, socket, flags) => DllCall(zmqdll_func['zmq_msg_send'], "Ptr", message, "ptr", socket, "int", flags, "int")
+zmq_msg_recv(message, socket, flags) => DllCall(zmqdll_func['zmq_msg_recv'], "Ptr", message, "ptr", socket, "int", flags, "int")
+zmq_msg_more(message) => DllCall(zmqdll_func['zmq_msg_more'], "Ptr", message, "int")
+zmq_memcpy(dest, src, count) => DllCall(memcpy, "Ptr", dest, "ptr", src, "UPtr", count, "ptr")
 
 ;ZMQ_EXPORT int zmq_poll (zmq_pollitem_t *items_, int nitems_, long timeout_);
 zmq_poll(items := array(map("socket", 0, "fd", 0, "events", 0, "revents", 0)), time_out := -1)
@@ -43,6 +47,13 @@ zmq_poll(items := array(map("socket", 0, "fd", 0, "events", 0, "revents", 0)), t
     return revents
 }
 
+/**
+ * 
+ * @param {any} socket 
+ * @param {any} str 
+ * @param {string} encoding 
+ * @param {number} mode 
+ */
 zmq_send_string(socket, str, encoding := "UTF-8", mode := 0)
 {
     buf := Buffer(StrPut(str, encoding))
@@ -67,23 +78,47 @@ zmq_recv_string(socket, &recv_str := '', mode := 0, encoding := "UTF-8", buf_siz
     return rtn
 }
 
-zmq_s_recv(socket)
+zmq_msg_send_bin(socket, bin, mode := 0)
+{
+    message := Buffer(64, 0)
+    zmq_msg_init_size(message, bin.Size)
+    zmq_memcpy(zmq_msg_data(message), bin, bin.Size)
+    rc := zmq_msg_send(message, socket, mode)
+    zmq_msg_close(message)
+    return rc
+}
+
+zmq_msg_recv_bin(socket, &recv_bin := Buffer(), mode := 0)
 {
     message := Buffer(64, 0)
     zmq_msg_init(message)
-    zmq_recv(socket, message, 0)
+    rtn := zmq_msg_recv(message, socket, mode)
     size := zmq_msg_size(message)
-    return StrGet(zmq_msg_data(message), size + 1)
+    buf := Buffer(size, 0)
+    zmq_memcpy(buf, zmq_msg_data(message), size)
+    recv_bin := buf
+    return rtn
 }
 
-zmq_s_send(socket, str)
+zmq_msg_send_string(socket, str, encoding := 'UTF-8', mode := 0)
 {
     message := Buffer(64, 0)
-    zmq_msg_init_size(message, StrLen(str))
-    StrPut(str, zmq_msg_data(message), StrLen(str))
-    rc := zmq_send(socket, message, 0)
+    zmq_msg_init_size(message, StrPut(str, encoding))
+    StrPut(str, zmq_msg_data(message), encoding)
+    rc := zmq_msg_send(message, socket, mode)
     zmq_msg_close(message)
     return rc
+}
+
+zmq_msg_recv_string(socket, &recv_str := '', mode := 0, encoding := 'UTF-8')
+{
+    message := Buffer(64, 0)
+    zmq_msg_init(message)
+    rtn := zmq_msg_recv(message, socket, mode)
+    size := zmq_msg_size(message)
+    recv_str := StrGet(zmq_msg_data(message), size + 1, encoding)
+    zmq_msg_close(message)
+    return rtn
 }
 
 class zmq_constant
@@ -381,5 +416,9 @@ class zmq_constant
         for k,v in zmqdll_func
             zmqdll_func[k] := DllCall("GetProcAddress", "Ptr", DllCall("LoadLibrary", "Str", zmqdll, "Ptr"), "AStr", k, "Ptr")
         dllcall("SetDllDirectory", "Str", A_ScriptDir)
+        global memcpy := DllCall("GetProcAddress", "Ptr", DllCall("LoadLibrary", "Str", "ntdll.dll", "Ptr"), "AStr", "memcpy", "Ptr")
     }
 }
+
+
+#Include <Advapi32>
